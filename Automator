@@ -1,0 +1,16 @@
+# Run Terminal with our script
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "\"$HOME/Documents/codeprojects/upbrew/upbrew.sh\""
+    delay 1
+    repeat
+        if not busy of window 1 then
+            delay 2
+            close window 1
+            exit repeat
+        end if
+        delay 1
+    end repeat
+end tell
+EOF 

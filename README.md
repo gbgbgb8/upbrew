@@ -102,4 +102,39 @@ SOFTWARE.
 ## 🔍 Keywords
 
 homebrew, brew, maintenance, automation, macos, linux, package manager, upgrade, update, cleanup, system maintenance, bash script, terminal, command line, package management
+
+## 🎯 Creating a Dock Application (macOS)
+
+You can create a clickable application icon for your Dock:
+
+1. Open **Automator**
+2. Create a new **Application**
+3. Add a "Run Shell Script" action and paste this code:
+
+```applescript
+# Run Terminal with our script
+osascript <<EOF
+tell application "Terminal"
+    activate
+    do script "\"$HOME/Documents/codeprojects/upbrew/upbrew.sh\""
+    delay 1
+    repeat
+        if not busy of window 1 then
+            delay 2
+            close window 1
+            exit repeat
+        end if
+        delay 1
+    end repeat
+end tell
+EOF
+```
+
+4. Save as "UpBrew.app" in your desired location
+5. To use the custom icon:
+   - Right-click UpBrew.app > Get Info
+   - Drag `icon.icns` onto the icon in the top-left corner
+6. Drag UpBrew.app to your Dock
+
+Now you can run your Homebrew maintenance with a single click! The Terminal window will open, run the script, and close automatically when finished.
 ```
