@@ -2,7 +2,7 @@
 osascript <<EOF
 tell application "Terminal"
     activate
-    do script "\"$HOME/Documents/codeprojects/upbrew/upbrew.sh\""
+    do script "clear && \"$HOME/Documents/codeprojects/upbrew/upbrew.sh\" && echo && echo 'Press any key to close...' && read -n 1 -s"
     delay 1
     repeat
         if not busy of window 1 then
