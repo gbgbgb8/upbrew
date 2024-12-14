@@ -10,35 +10,48 @@ A simple, user-friendly bash script to automate Homebrew maintenance tasks on ma
 - Cleans up old versions and cached downloads
 - Checks system for potential problems
 - Beautiful color-coded output for easy reading
+- Smart DNS resolution handling
+  - Pre-resolves required domains
+  - Automatically fixes DNS issues when needed
+  - Only requests sudo access when necessary
+- Single password prompt design
+  - Asks for password only once at start
+  - Additional prompt only if DNS cache needs flushing
 
 ## 🚦 Status Indicators Explained
 
 When running UpBrew, you'll see these indicators:
-- `==>` (Blue): Starting a new task
+- `==>` (Blue): Starting a new task or providing information
 - `✔` (Green): Task completed successfully
-- `!` (Yellow): Minor issue - usually safe to ignore
+- `!` (Yellow): Minor issue or warning - usually handled automatically
 - `✘` (Red): Error that needs attention
 
 ## 📊 What UpBrew Does (In Detail)
 
-1. **Updates Homebrew** (`brew update`)
-   - Downloads latest package information
-   - Like refreshing the App Store
+1. **Initial Setup**
+   - Checks for Homebrew installation
+   - Requests sudo privileges if needed
+   - Pre-resolves required domains
 
-2. **Upgrades Packages** (`brew upgrade`)
+2. **Updates Homebrew** (`brew update`)
+   - Downloads latest package information
+   - Automatically handles DNS issues if they occur
+   - Retries with DNS warm-up if needed
+
+3. **Upgrades Packages** (`brew upgrade`)
    - Updates all your command-line tools
    - Similar to updating apps on your phone
 
-3. **Upgrades Casks** (`brew upgrade --cask`)
+4. **Upgrades Casks** (`brew upgrade --cask`)
    - Updates GUI applications installed via Homebrew
    - Only runs on macOS
 
-4. **Cleanup** (`brew cleanup`)
+5. **Cleanup** (`brew cleanup`)
    - Removes old versions of packages
    - Frees up disk space
    - Like emptying the trash
 
-5. **Health Check** (`brew doctor`)
+6. **Health Check** (`brew doctor`)
    - Checks for system issues
    - Suggests fixes if needed
    - Like running a diagnostic test
@@ -49,12 +62,16 @@ When you see:
 ```
 Administrator privileges needed for some operations. Please enter your password:
 ```
-This is normal! UpBrew needs your password to:
-- Move files to system folders
-- Update system-level packages
-- Clean up protected directories
+This is normal! UpBrew needs your password for:
+- Initial Homebrew operations
+- DNS cache flushing (only if needed)
 
-Your password is never stored or transmitted anywhere.
+You might occasionally see a second password prompt if:
+- DNS resolution fails on first try
+- The DNS cache needs to be flushed
+- The system needs to restart the DNS resolver
+
+Your password is never stored and is only used for system operations.
 
 ## 💫 Pro Tips
 
@@ -77,6 +94,17 @@ Your password is never stored or transmitted anywhere.
    - Run UpBrew before installing new software
    - Run it after macOS updates
    - Run it if you notice your development tools acting strange
+
+5. **DNS Issues**
+   - If you frequently see DNS-related errors, consider:
+     - Checking your network connection
+     - Verifying your DNS settings
+     - Running UpBrew again after network changes
+
+6. **Performance**
+   - The script automatically optimizes DNS resolution
+   - First-time runs might take longer due to DNS cache warming
+   - Subsequent runs should be faster
 
 ## 🎬 Quick Start for macOS Users
 
