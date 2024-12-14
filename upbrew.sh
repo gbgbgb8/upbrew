@@ -35,11 +35,16 @@ check_brew() {
 
 # Check for sudo without password
 check_sudo() {
+    echo "DEBUG: Checking sudo status..."
     if ! sudo -n true 2>/dev/null; then
         print_status "Administrator privileges needed for some operations. Please enter your password:"
-        sudo -v
-        # Keep sudo alive
-        while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+        if ! sudo -v; then
+            print_error "Failed to obtain sudo privileges"
+            exit 1
+        fi
+        echo "DEBUG: Successfully obtained sudo token"
+    else
+        echo "DEBUG: Existing sudo token found"
     fi
 }
 
@@ -49,25 +54,51 @@ BREW_DOMAINS=(
     "api.github.com"
     "raw.githubusercontent.com"
     "github.com"
+    "formulae.brew.sh/api/formula.jws.json"
+    "formulae.brew.sh/api/cask.jws.json"
+    "formulae.brew.sh/api/formula_tap_migrations.jws.json"
+    "formulae.brew.sh/api/cask_tap_migrations.jws.json"
 )
 
 # Pre-resolve DNS for Homebrew domains
 warm_dns() {
     print_status "Pre-resolving Homebrew domains..."
+    
+    local need_flush=false
+    
+    # Try dig first for each domain
     for domain in "${BREW_DOMAINS[@]}"; do
-        if ping -c 1 "$domain" >/dev/null 2>&1; then
-            print_success "Resolved $domain"
+        if dig +short "$domain" >/dev/null 2>&1; then
+            print_success "Pre-resolved $domain"
         else
-            print_warning "Could not resolve $domain"
+            print_warning "Failed to resolve $domain"
+            need_flush=true
         fi
     done
+    
+    # Only flush DNS if the initial resolution failed
+    if [[ "$need_flush" = true && "$OSTYPE" == "darwin"* ]]; then
+        print_status "DNS resolution failed. Need to flush DNS cache (requires sudo)..."
+        sudo dscacheutil -flushcache
+        sudo killall -HUP mDNSResponder
+        print_success "DNS cache flushed"
+        
+        # Verify resolution after flush
+        for domain in "${BREW_DOMAINS[@]}"; do
+            if ping -c 1 "$domain" >/dev/null 2>&1; then
+                print_success "Resolved $domain after flush"
+            else
+                print_warning "Still cannot resolve $domain"
+            fi
+        done
+    fi
 }
 
 # Retry a command up to 3 times with increasing delays
 retry_command() {
     local cmd="$1"
     local tries=3
-    local wait=2
+    local wait=5  # Increased initial wait
     
     for ((i=1; i<=tries; i++)); do
         if eval "$cmd"; then
@@ -144,8 +175,16 @@ main() {
     echo -e "\n${GREEN}✨ Homebrew maintenance completed!${NC}\n"
 }
 
+# Add trap for cleanup
+trap cleanup EXIT
+
 # Trap Ctrl+C and handle it gracefully
 trap 'echo -e "\n${YELLOW}Script interrupted by user${NC}"; exit 1' INT
 
 # Run main function
 main "$@"
+
+# Add this function back
+cleanup() {
+    return 0
+}
